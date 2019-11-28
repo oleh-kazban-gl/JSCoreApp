@@ -1,20 +1,11 @@
 /* eslint-disable import/prefer-default-export */
+import { ProcessService } from './ProcessService';
+import { BaseHuman } from '../models/human';
+import { BaseRobot } from '../models/robot';
+
 const api = 'https://swapi.co/api';
 
 export class DataService {
-  static get(url) {
-    return new Promise(resolve => {
-      const request = new XMLHttpRequest();
-
-      request.onloadend = (result) => {
-        resolve(result.currentTarget.response);
-      };
-
-      request.open('GET', `${api}/${url}`);
-      request.send();
-    });
-  }
-
   static getUsers(userIds) {
     const requests = [];
 
@@ -33,10 +24,18 @@ export class DataService {
     return result;
   }
 
-  static async dataProcessor(action) {
-    const data = await action;
+  static dataProcessor(data) {
+    const result = [];
 
-    console.log('data: ', data);
+    data.forEach(record => {
+      if (ProcessService.isHuman(record)) {
+        result.push(new BaseHuman(record));
+      } else if (ProcessService.isRobot(record)) {
+        result.push(new BaseRobot(record));
+      }
+    });
+
+    return result;
   }
 }
 
@@ -44,22 +43,22 @@ function UserPromiseFactory(userId) {
   return new Promise(resolve => {
     const request = new XMLHttpRequest();
 
+    request.responseType = "json";
+
     request.onloadend = (result) => {
       resolve(result.currentTarget.response);
     };
 
-    request.open('GET', `${api}/people/${userId}`);
+    request.open('GET', `${api}/people/${userId}/`);
     request.send();
   });
 }
 
-// let Luke;
+DataService.getUsers([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+  .then(result => {
+    console.log('result: ', result);
 
-// DataService.fetch('people/1').then(result => {
-//   Luke = result;
-// });
-// DataService.dataProcessor(DataService.fetch('people/1'));
+    const entities = DataService.dataProcessor(result);
 
-DataService.getUsers([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).then(result => {
-  console.log('result: ', result);
-})
+    console.log('entities: ', entities);
+  });
